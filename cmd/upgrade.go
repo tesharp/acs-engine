@@ -62,25 +62,25 @@ func newUpgradeCmd() *cobra.Command {
 	return upgradeCmd
 }
 
-func (uc *upgradeCmd) validate(cmd *cobra.Command, args []string) {
+func (uc *upgradeCmd) validate(cmd *cobra.Command, args []string) error {
 	log.Infoln("validating...")
 
 	var err error
 
 	uc.locale, err = i18n.LoadTranslations()
 	if err != nil {
-		log.Fatalf("error loading translation files: %s", err.Error())
+		return fmt.Errorf(fmt.Sprintf("error loading translation files: %s", err.Error()))
 	}
 
 	if uc.resourceGroupName == "" {
 		cmd.Usage()
-		log.Fatal("--resource-group must be specified")
+		return fmt.Errorf(fmt.Sprintf("--resource-group must be specified"))
 	}
 
 	// TODO(colemick): add in the cmd annotation to help enable autocompletion
 	if uc.upgradeModelFile == "" {
 		cmd.Usage()
-		log.Fatal("--upgrademodel-file must be specified")
+		return fmt.Errorf(fmt.Sprintf("--upgrademodel-file must be specified"))
 	}
 
 	if uc.client, err = uc.authArgs.getClient(); err != nil {
@@ -89,14 +89,14 @@ func (uc *upgradeCmd) validate(cmd *cobra.Command, args []string) {
 
 	if uc.deploymentDirectory == "" {
 		cmd.Usage()
-		log.Fatal("--deployment-dir must be specified")
+		return fmt.Errorf("--deployment-dir must be specified")
 	}
 
 	// load apimodel from the deployment directory
 	apiModelPath := path.Join(uc.deploymentDirectory, "apimodel.json")
 
 	if _, err = os.Stat(apiModelPath); os.IsNotExist(err) {
-		log.Fatalf("specified api model does not exist (%s)", apiModelPath)
+		return fmt.Errorf(fmt.Sprintf("specified api model does not exist (%s)", apiModelPath))
 	}
 
 	apiloader := &api.Apiloader{
@@ -106,24 +106,24 @@ func (uc *upgradeCmd) validate(cmd *cobra.Command, args []string) {
 	}
 	uc.containerService, uc.apiVersion, err = apiloader.LoadContainerServiceFromFile(apiModelPath, true, nil)
 	if err != nil {
-		log.Fatalf("error parsing the api model: %s", err.Error())
+		return fmt.Errorf(fmt.Sprintf("error parsing the api model: %s", err.Error()))
 	}
 	if _, err = os.Stat(uc.upgradeModelFile); os.IsNotExist(err) {
-		log.Fatalf("specified upgrade model file does not exist (%s)", uc.upgradeModelFile)
+		return fmt.Errorf(fmt.Sprintf("specified upgrade model file does not exist (%s)", uc.upgradeModelFile))
 	}
 
 	// validate upgrade and set the Goal State
 	contents, err := ioutil.ReadFile(uc.upgradeModelFile)
 	if err != nil {
-		log.Fatalf("error reading file %s: %s", uc.upgradeModelFile, err.Error())
+		return fmt.Errorf(fmt.Sprintf("error reading file %s: %s", uc.upgradeModelFile, err.Error()))
 	}
 	if err = apiloader.UpdateContainerServiceForUpgrade(contents, vlabs.APIVersion, uc.containerService, true); err != nil {
-		log.Fatalf("error loading ContainerService: %s", err.Error())
+		return fmt.Errorf(fmt.Sprintf("error loading ContainerService: %s", err.Error()))
 	}
 
 	uc.client, err = uc.authArgs.getClient()
 	if err != nil {
-		log.Fatalf("failed to get client") // TODO: cleanup
+		return fmt.Errorf(fmt.Sprintf("failed to get client")) // TODO: cleanup
 	}
 
 	// Read name suffix to identify nodes in the resource group that belong
@@ -143,6 +143,8 @@ func (uc *upgradeCmd) validate(cmd *cobra.Command, args []string) {
 	nameSuffixParam := templateParameters["nameSuffix"].(map[string]interface{})
 	uc.nameSuffix = nameSuffixParam["defaultValue"].(string)
 	log.Infoln(fmt.Sprintf("Name suffix: %s", uc.nameSuffix))
+
+	return nil
 }
 
 func (uc *upgradeCmd) run(cmd *cobra.Command, args []string) error {
