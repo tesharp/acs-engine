@@ -81,7 +81,13 @@ func main() {
 		}
 	}
 
+	host := fmt.Sprintf("%s.%s.cloudapp.azure.com", cfg.Name, cfg.Location)
+	user := eng.ClusterDefinition.Properties.LinuxProfile.AdminUsername
+	log.Printf("SSH Key: %s\n", cfg.GetSSHKeyPath())
+	log.Printf("Master Node: %s@%s\n", user, host)
+
 	if cfg.IsKubernetes() {
+		log.Printf("SSH Command: ssh -i %s %s@%s", cfg.GetSSHKeyPath(), user, host)
 		os.Setenv("KUBECONFIG", cfg.GetKubeConfig())
 		log.Printf("Kubeconfig:%s\n", cfg.GetKubeConfig())
 		log.Println("Waiting on nodes to go into ready state...")
@@ -93,12 +99,12 @@ func main() {
 	}
 
 	if cfg.IsDCOS() {
-		host := fmt.Sprintf("%s.%s.cloudapp.azure.com", cfg.Name, cfg.Location)
-		user := eng.ClusterDefinition.Properties.LinuxProfile.AdminUsername
-		log.Printf("SSH Key: %s\n", cfg.GetSSHKeyPath())
-		log.Printf("Master Node: %s@%s\n", user, host)
 		log.Printf("SSH Command: ssh -i %s -p 2200 %s@%s", cfg.GetSSHKeyPath(), user, host)
-		cluster := dcos.NewCluster(cfg, eng)
+		cluster, err := dcos.NewCluster(cfg, eng)
+		if err != nil {
+			teardown()
+			log.Fatalf("Error trying to build needed cluster configuration:%s", err)
+		}
 		err = cluster.InstallDCOSClient()
 		if err != nil {
 			teardown()
