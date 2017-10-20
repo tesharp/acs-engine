@@ -37,10 +37,10 @@ if ! grep -Fq "$(DOMAINNAME)" /etc/dhcp/dhclient.conf
 then
     echo $(date) " - Adding domain to dhclient.conf"
 
-    # echo "supersede domain-name \"$(DOMAINNAME)\";" >> /etc/dhcp/dhclient.conf
-    # echo "prepend domain-search \"$(DOMAINNAME)\";" >> /etc/dhcp/dhclient.conf
+    echo "supersede domain-name \"$(DOMAINNAME)\";" >> /etc/dhcp/dhclient.conf
+    echo "prepend domain-search \"$(DOMAINNAME)\";" >> /etc/dhcp/dhclient.conf
 fi
 
 # service networking restart
 echo $(date) " - Restarting network"
-# /etc/init.d/networking restart
+/etc/init.d/networking restart
