@@ -31,37 +31,37 @@
     "etcdServerCertificate": {
       "metadata": {
         "description": "The base 64 server certificate used on the master"
-      }, 
+      },
       "type": "string"
-    }, 
+    },
     "etcdServerPrivateKey": {
       "metadata": {
         "description": "The base 64 server private key used on the master."
-      }, 
+      },
       "type": "securestring"
-    }, 
+    },
     "etcdClientCertificate": {
       "metadata": {
         "description": "The base 64 server certificate used on the master"
-      }, 
+      },
       "type": "string"
-    }, 
+    },
     "etcdClientPrivateKey": {
       "metadata": {
         "description": "The base 64 server private key used on the master."
-      }, 
+      },
       "type": "securestring"
     },
     "etcdPeerCertificate0": {
       "metadata": {
         "description": "The base 64 server certificates used on the master"
-      }, 
+      },
       "type": "string"
     },
     "etcdPeerPrivateKey0": {
       "metadata": {
         "description": "The base 64 server private keys used on the master."
-      }, 
+      },
       "type": "securestring"
     },
     {{if ge .MasterProfile.Count 3}}
@@ -583,12 +583,13 @@
     "networkPolicy": {
       "defaultValue": "{{.OrchestratorProfile.KubernetesConfig.NetworkPolicy}}",
       "metadata": {
-        "description": "The network policy enforcement to use (none|azure|calico)"
+        "description": "The network policy enforcement to use (none|azure|calico|cilium)"
       },
       "allowedValues": [
         "none",
         "azure",
-        "calico"
+        "calico",
+        "cilium"
       ],
       "type": "string"
     },

@@ -251,12 +251,11 @@ function configAzureNetworkPolicy() {
     /sbin/ebtables -t nat --list
 
     # Enable CNI.
-    setNetworkPlugin cni
-    setDockerOpts " --volume=/etc/cni/:/etc/cni:ro --volume=/opt/cni/:/opt/cni:ro"
+	configCNINetworkPolicy
 }
 
 # Configures Kubelet to use CNI and mount the appropriate hostpaths
-function configCalicoNetworkPolicy() {
+function configCNINetworkPolicy() {
     setNetworkPlugin cni
     setDockerOpts " --volume=/etc/cni/:/etc/cni:ro --volume=/opt/cni/:/opt/cni:ro"
 }
@@ -264,8 +263,8 @@ function configCalicoNetworkPolicy() {
 function configNetworkPolicy() {
     if [[ "${NETWORK_POLICY}" = "azure" ]]; then
         configAzureNetworkPolicy
-    elif [[ "${NETWORK_POLICY}" = "calico" ]]; then
-        configCalicoNetworkPolicy
+    elif [[ "${NETWORK_POLICY}" = "calico" ]] || [[ "${NETWORK_POLICY}" = "cilium" ]]; then
+        configCNINetworkPolicy
     else
         # No policy, defaults to kubenet.
         setNetworkPlugin kubenet
